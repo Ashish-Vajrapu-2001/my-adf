@@ -1,0 +1,39 @@
+{
+    "name": "DS_AzureSQL_Dynamic",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_AzureSQL_Dynamic",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "source_system_id": {
+                    "value": "@dataset().source_system_id",
+                    "type": "Expression"
+                }
+            }
+        },
+        "parameters": {
+            "source_system_id": {
+                "type": "string"
+            },
+            "schema_name": {
+                "type": "string"
+            },
+            "table_name": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": {
+                "value": "@dataset().schema_name",
+                "type": "Expression"
+            },
+            "table": {
+                "value": "@dataset().table_name",
+                "type": "Expression"
+            }
+        }
+    }
+}
