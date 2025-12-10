@@ -117,7 +117,7 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"notebookPath": "/bronze/Incremental_CDC_Dynamic",
+								"notebookPath": "/Shared/Databricks/databricks/notebooks/bronze/Incremental_CDC_Dynamic.py",
 								"baseParameters": {
 									"table_id": {
 										"value": "@pipeline().parameters.table_metadata.table_id",
@@ -152,6 +152,10 @@
 										"type": "Expression"
 									}
 								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureDatabricks1",
+								"type": "LinkedServiceReference"
 							}
 						}
 					]
