@@ -79,7 +79,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/bronze/Initial_Load_Dynamic",
+					"notebookPath": "/Shared/Databricks/databricks/notebooks/bronze/Initial_Load_Dynamic.py",
 					"baseParameters": {
 						"table_id": {
 							"value": "@pipeline().parameters.table_metadata.table_id",
@@ -114,6 +114,10 @@
 							"type": "Expression"
 						}
 					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
 				}
 			}
 		],
