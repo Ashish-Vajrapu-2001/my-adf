@@ -1,124 +1,168 @@
 {
-    "name": "PL_Incremental_CDC_Single_Table",
-    "properties": {
-        "activities": [
-            {
-                "name": "Copy CDC Data",
-                "type": "Copy",
-                "dependsOn": [],
-                "policy": {
-                    "timeout": "0.01:00:00",
-                    "retry": 2,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "userProperties": [],
-                "typeProperties": {
-                    "source": {
-                        "type": "AzureSqlSource",
-                        "sqlReaderStoredProcedureName": "[control].[sp_GetCDCChanges]",
-                        "storedProcedureParameters": {
-                            "SchemaName": { "value": "@pipeline().parameters.table_metadata.schema_name", "type": "String" },
-                            "TableName": { "value": "@pipeline().parameters.table_metadata.table_name", "type": "String" },
-                            "PrimaryKeyColumns": { "value": "@pipeline().parameters.table_metadata.primary_key_columns", "type": "String" },
-                            "LastSyncVersion": { "value": "@pipeline().parameters.table_metadata.last_sync_version", "type": "Int64" }
-                        },
-                        "queryTimeout": "02:00:00",
-                        "partitionOption": "None"
-                    },
-                    "sink": {
-                        "type": "ParquetSink",
-                        "storeSettings": {
-                            "type": "AzureBlobFSWriteSettings"
-                        },
-                        "formatSettings": {
-                            "type": "ParquetWriteSettings"
-                        }
-                    },
-                    "enableStaging": false
-                },
-                "inputs": [
-                    {
-                        "referenceName": "DS_AzureSQL_Dynamic",
-                        "type": "DatasetReference",
-                        "parameters": {
-                            "source_system_id": "@pipeline().parameters.table_metadata.source_system_id",
-                            "schema_name": "@pipeline().parameters.table_metadata.schema_name",
-                            "table_name": "@pipeline().parameters.table_metadata.table_name"
-                        }
-                    }
-                ],
-                "outputs": [
-                    {
-                        "referenceName": "DS_Parquet_Bronze_Incremental",
-                        "type": "DatasetReference",
-                        "parameters": {
-                            "source_system_id": "@pipeline().parameters.table_metadata.source_system_id",
-                            "schema_name": "@pipeline().parameters.table_metadata.schema_name",
-                            "table_name": "@pipeline().parameters.table_metadata.table_name",
-                            "run_id": "@pipeline().RunId"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "Check If Data Copied",
-                "type": "IfCondition",
-                "dependsOn": [
-                    {
-                        "activity": "Copy CDC Data",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "userProperties": [],
-                "typeProperties": {
-                    "expression": {
-                        "value": "@greater(activity('Copy CDC Data').output.rowsCopied, 0)",
-                        "type": "Expression"
-                    },
-                    "ifTrueActivities": [
-                        {
-                            "name": "Notebook Incremental Merge",
-                            "type": "DatabricksNotebook",
-                            "dependsOn": [],
-                            "policy": {
-                                "timeout": "0.00:30:00",
-                                "retry": 0,
-                                "retryIntervalInSeconds": 30,
-                                "secureOutput": false,
-                                "secureInput": false
-                            },
-                            "userProperties": [],
-                            "typeProperties": {
-                                "notebookPath": "/bronze/Incremental_CDC_Dynamic",
-                                "baseParameters": {
-                                    "table_id": "@pipeline().parameters.table_metadata.table_id",
-                                    "source_system_id": "@pipeline().parameters.table_metadata.source_system_id",
-                                    "schema_name": "@pipeline().parameters.table_metadata.schema_name",
-                                    "table_name": "@pipeline().parameters.table_metadata.table_name",
-                                    "primary_key_columns": "@pipeline().parameters.table_metadata.primary_key_columns",
-                                    "is_composite_key": "@string(pipeline().parameters.table_metadata.is_composite_key)",
-                                    "incremental_path": "@concat('bronze/', pipeline().parameters.table_metadata.source_system_id, '/', pipeline().parameters.table_metadata.schema_name, '/', pipeline().parameters.table_metadata.table_name, '/incremental/', pipeline().RunId)",
-                                    "pipeline_run_id": "@pipeline().RunId"
-                                }
-                            },
-                            "linkedServiceName": {
-                                "referenceName": "LS_AzureDatabricks",
-                                "type": "LinkedServiceReference"
-                            }
-                        }
-                    ]
-                }
-            }
-        ],
-        "parameters": {
-            "table_metadata": {
-                "type": "object"
-            }
-        },
-        "annotations": []
-    }
+	"name": "PL_Incremental_CDC_Single_Table",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy CDC Data",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[control].[sp_GetCDCChanges]",
+						"storedProcedureParameters": {
+							"SchemaName": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.table_metadata.schema_name",
+									"type": "Expression"
+								}
+							},
+							"TableName": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.table_metadata.table_name",
+									"type": "Expression"
+								}
+							},
+							"PrimaryKeyColumns": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.table_metadata.primary_key_columns",
+									"type": "Expression"
+								}
+							},
+							"LastSyncVersion": {
+								"type": "Int64",
+								"value": {
+									"value": "@pipeline().parameters.table_metadata.last_sync_version",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_AzureSQL_Dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"source_system_id": "@pipeline().parameters.table_metadata.source_system_id",
+							"schema_name": "@pipeline().parameters.table_metadata.schema_name",
+							"table_name": "@pipeline().parameters.table_metadata.table_name"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_Parquet_Bronze_Incremental",
+						"type": "DatasetReference",
+						"parameters": {
+							"source_system_id": "@pipeline().parameters.table_metadata.source_system_id",
+							"schema_name": "@pipeline().parameters.table_metadata.schema_name",
+							"table_name": "@pipeline().parameters.table_metadata.table_name",
+							"run_id": "@pipeline().RunId"
+						}
+					}
+				]
+			},
+			{
+				"name": "Check If Data Copied",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Copy CDC Data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('Copy CDC Data').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Notebook Incremental Merge",
+							"type": "DatabricksNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.00:30:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebookPath": "/bronze/Incremental_CDC_Dynamic",
+								"baseParameters": {
+									"table_id": {
+										"value": "@pipeline().parameters.table_metadata.table_id",
+										"type": "Expression"
+									},
+									"source_system_id": {
+										"value": "@pipeline().parameters.table_metadata.source_system_id",
+										"type": "Expression"
+									},
+									"schema_name": {
+										"value": "@pipeline().parameters.table_metadata.schema_name",
+										"type": "Expression"
+									},
+									"table_name": {
+										"value": "@pipeline().parameters.table_metadata.table_name",
+										"type": "Expression"
+									},
+									"primary_key_columns": {
+										"value": "@pipeline().parameters.table_metadata.primary_key_columns",
+										"type": "Expression"
+									},
+									"is_composite_key": {
+										"value": "@string(pipeline().parameters.table_metadata.is_composite_key)",
+										"type": "Expression"
+									},
+									"incremental_path": {
+										"value": "@concat('bronze/', pipeline().parameters.table_metadata.source_system_id, '/', pipeline().parameters.table_metadata.schema_name, '/', pipeline().parameters.table_metadata.table_name, '/incremental/', pipeline().RunId)",
+										"type": "Expression"
+									},
+									"pipeline_run_id": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"table_metadata": {
+				"type": "object"
+			}
+		},
+		"annotations": []
+	}
 }
