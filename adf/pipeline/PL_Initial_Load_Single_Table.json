@@ -79,7 +79,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Shared/Databricks/databricks/notebooks/bronze/Initial_Load_Dynamic.py",
+					"notebookPath": "/Shared/Databricks/databricks/notebooks/bronze/Initial_Load_Dynamic",
 					"baseParameters": {
 						"table_id": {
 							"value": "@pipeline().parameters.table_metadata.table_id",
