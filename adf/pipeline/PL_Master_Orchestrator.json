@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup Active Tables",
+				"name": "Lookup_Active_Tables",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -29,34 +29,11 @@
 				}
 			},
 			{
-				"name": "Filter Initial Load",
-				"type": "Filter",
-				"dependsOn": [
-					{
-						"activity": "Lookup Active Tables",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"items": {
-						"value": "@activity('Lookup Active Tables').output.value",
-						"type": "Expression"
-					},
-					"condition": {
-						"value": "@equals(item().initial_load_completed, 0)",
-						"type": "Expression"
-					}
-				}
-			},
-			{
-				"name": "ForEach Initial Load",
+				"name": "ForEach_Table",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Filter Initial Load",
+						"activity": "Lookup_Active_Tables",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -65,105 +42,77 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Filter Initial Load').output.value",
+						"value": "@activity('Lookup_Active_Tables').output.value",
 						"type": "Expression"
 					},
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "Execute Initial Load",
-							"type": "ExecutePipeline",
+							"name": "Check_Load_Type",
+							"type": "IfCondition",
 							"dependsOn": [],
-							"policy": {
-								"secureInput": false
-							},
 							"userProperties": [],
 							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PL_Initial_Load_Single_Table",
-									"type": "PipelineReference"
+								"expression": {
+									"value": "@equals(item().initial_load_completed, false)",
+									"type": "Expression"
 								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"table_metadata": {
-										"value": "@item()",
-										"type": "Expression"
+								"ifFalseActivities": [
+									{
+										"name": "Execute_Incremental_CDC",
+										"type": "ExecutePipeline",
+										"dependsOn": [],
+										"policy": {
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "PL_Incremental_CDC_Single_Table",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"table_metadata": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
 									}
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "Filter Incremental Load",
-				"type": "Filter",
-				"dependsOn": [
-					{
-						"activity": "ForEach Initial Load",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"items": {
-						"value": "@activity('Lookup Active Tables').output.value",
-						"type": "Expression"
-					},
-					"condition": {
-						"value": "@equals(item().initial_load_completed, 1)",
-						"type": "Expression"
-					}
-				}
-			},
-			{
-				"name": "ForEach Incremental Load",
-				"type": "ForEach",
-				"dependsOn": [
-					{
-						"activity": "Filter Incremental Load",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"items": {
-						"value": "@activity('Filter Incremental Load').output.value",
-						"type": "Expression"
-					},
-					"isSequential": false,
-					"batchCount": 5,
-					"activities": [
-						{
-							"name": "Execute Incremental Load",
-							"type": "ExecutePipeline",
-							"dependsOn": [],
-							"policy": {
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PL_Incremental_CDC_Single_Table",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"table_metadata": {
-										"value": "@item()",
-										"type": "Expression"
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Execute_Initial_Load",
+										"type": "ExecutePipeline",
+										"dependsOn": [],
+										"policy": {
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "PL_Initial_Load_Single_Table",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"table_metadata": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
 									}
-								}
+								]
 							}
 						}
 					]
 				}
 			}
 		],
-		"annotations": []
-	}
+		"annotations": [],
+		"lastPublishTime": "2025-01-01T00:00:00Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
 }
